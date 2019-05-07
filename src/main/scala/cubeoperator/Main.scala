@@ -10,7 +10,7 @@ object Main {
   def main(args: Array[String]) {
     val reducers = 10
 
-    val inputFile= "../lineorder_small.tbl"
+    val inputFile= "../lineorder_xs.tbl"
     val input = new File(getClass.getResource(inputFile).getFile).getPath
 
     val sparkConf = new SparkConf().setAppName("CS422-Project2").setMaster("local[16]")
@@ -35,6 +35,8 @@ object Main {
     var groupingList = List("lo_suppkey","lo_shipmode","lo_orderdate")
 
     val res = cb.cube(dataset, groupingList, "lo_supplycost", "SUM")
+
+    //res.collect().foreach(println)  //Print our cube
 
     /*
        The above call corresponds to the query:

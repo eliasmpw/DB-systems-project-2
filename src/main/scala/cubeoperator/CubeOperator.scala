@@ -20,7 +20,6 @@ class CubeOperator(reducers: Int) {
     val schema = dataset.getSchema()
 
     val index = groupingAttributes.map(x => schema.indexOf(x))
-    println(index)
     val aggIndex = schema.indexOf(aggAttribute)
 
     // Task 1
@@ -30,11 +29,11 @@ class CubeOperator(reducers: Int) {
 
     // Group by - bottom cell
     agg match {
-      case "COUNT" => partialCellsSingle = rdd.map(row => (index.map(colIndex => row.get(colIndex)), 1.0)).reduceByKey((accum, current) => accum + current)
-      case "SUM" => partialCellsSingle = rdd.map(row => (index.map(colIndex => row.get(colIndex)), row.get(aggIndex).asInstanceOf[Int].toDouble)).reduceByKey((accum, current) => accum + current)
-      case "MIN" => partialCellsSingle = rdd.map(row => (index.map(colIndex => row.get(colIndex)), row.get(aggIndex).asInstanceOf[Int].toDouble)).reduceByKey((accum, current) => Math.min(accum, current))
-      case "MAX" => partialCellsSingle = rdd.map(row => (index.map(colIndex => row.get(colIndex)), row.get(aggIndex).asInstanceOf[Int].toDouble)).reduceByKey((accum, current) => Math.max(accum, current))
-      case "AVG" => partialCellsDouble = rdd.map(row => (index.map(colIndex => row.get(colIndex)), (row.get(aggIndex).asInstanceOf[Int].toDouble, 1.0))).reduceByKey((accum, current) => (accum._1 + current._1, accum._2 + current._2))
+      case "COUNT" => partialCellsSingle = rdd.map(row => (index.map(colIndex => row.get(colIndex)), 1.0)).reduceByKey((accum, current) => accum + current, reducers)
+      case "SUM" => partialCellsSingle = rdd.map(row => (index.map(colIndex => row.get(colIndex)), row.get(aggIndex).asInstanceOf[Int].toDouble)).reduceByKey((accum, current) => accum + current, reducers)
+      case "MIN" => partialCellsSingle = rdd.map(row => (index.map(colIndex => row.get(colIndex)), row.get(aggIndex).asInstanceOf[Int].toDouble)).reduceByKey((accum, current) => Math.min(accum, current), reducers)
+      case "MAX" => partialCellsSingle = rdd.map(row => (index.map(colIndex => row.get(colIndex)), row.get(aggIndex).asInstanceOf[Int].toDouble)).reduceByKey((accum, current) => Math.max(accum, current), reducers)
+      case "AVG" => partialCellsDouble = rdd.map(row => (index.map(colIndex => row.get(colIndex)), (row.get(aggIndex).asInstanceOf[Int].toDouble, 1.0))).reduceByKey((accum, current) => (accum._1 + current._1, accum._2 + current._2), reducers)
     }
 
     // Calculate permutations
@@ -51,11 +50,11 @@ class CubeOperator(reducers: Int) {
     // Second Step - shuffle and reduce partial results
     var cuboids: RDD[(List[Any], Double)] = null
     agg match {
-      case "COUNT" => cuboids = partialCellsSingle.reduceByKey((accum, current) => accum + current)
-      case "SUM" => cuboids = partialCellsSingle.reduceByKey((accum, current) => accum + current)
-      case "MIN" => cuboids = partialCellsSingle.reduceByKey((accum, current) => Math.min(accum, current))
-      case "MAX" => cuboids = partialCellsSingle.reduceByKey((accum, current) => Math.max(accum, current))
-      case "AVG" => cuboids = partialCellsDouble.reduceByKey((accum, current) => (accum._1 + current._1, accum._2 + current._2)).map { case (cols, values) => (cols, values._1 / values._2) }
+      case "COUNT" => cuboids = partialCellsSingle.reduceByKey((accum, current) => accum + current, reducers)
+      case "SUM" => cuboids = partialCellsSingle.reduceByKey((accum, current) => accum + current, reducers)
+      case "MIN" => cuboids = partialCellsSingle.reduceByKey((accum, current) => Math.min(accum, current), reducers)
+      case "MAX" => cuboids = partialCellsSingle.reduceByKey((accum, current) => Math.max(accum, current), reducers)
+      case "AVG" => cuboids = partialCellsDouble.reduceByKey((accum, current) => (accum._1 + current._1, accum._2 + current._2), reducers).map { case (cols, values) => (cols, values._1 / values._2) }
     }
 
     val finalCube = cuboids.map(x => (x._1.mkString(", ").replace("Some(", "").replace(")", ""), x._2))
@@ -69,7 +68,6 @@ class CubeOperator(reducers: Int) {
     val schema = dataset.getSchema()
 
     val index = groupingAttributes.map(x => schema.indexOf(x))
-    println(index)
     val aggIndex = schema.indexOf(aggAttribute)
 
     // Task 1
@@ -96,11 +94,11 @@ class CubeOperator(reducers: Int) {
     // Shuffle and reduce all
     var cuboids: RDD[(List[Any], Double)] = null
     agg match {
-      case "COUNT" => cuboids = partialCellsSingle.reduceByKey((accum, current) => accum + current)
-      case "SUM" => cuboids = partialCellsSingle.reduceByKey((accum, current) => accum + current)
-      case "MIN" => cuboids = partialCellsSingle.reduceByKey((accum, current) => Math.min(accum, current))
-      case "MAX" => cuboids = partialCellsSingle.reduceByKey((accum, current) => Math.max(accum, current))
-      case "AVG" => cuboids = partialCellsDouble.reduceByKey((accum, current) => (accum._1 + current._1, accum._2 + current._2)).map { case (cols, values) => (cols, values._1 / values._2) }
+      case "COUNT" => cuboids = partialCellsSingle.reduceByKey((accum, current) => accum + current, reducers)
+      case "SUM" => cuboids = partialCellsSingle.reduceByKey((accum, current) => accum + current, reducers)
+      case "MIN" => cuboids = partialCellsSingle.reduceByKey((accum, current) => Math.min(accum, current), reducers)
+      case "MAX" => cuboids = partialCellsSingle.reduceByKey((accum, current) => Math.max(accum, current), reducers)
+      case "AVG" => cuboids = partialCellsDouble.reduceByKey((accum, current) => (accum._1 + current._1, accum._2 + current._2), reducers).map { case (cols, values) => (cols, values._1 / values._2) }
     }
 
     val finalCube = cuboids.map(x => (x._1.mkString(", ").replace("Some(", "").replace(")", ""), x._2))

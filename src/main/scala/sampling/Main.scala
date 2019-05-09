@@ -9,7 +9,7 @@ object Main {
   def main(args: Array[String]) {
 
     val conf = new SparkConf().setAppName("app").setMaster("local[*]")
-    val sc = SparkContext.getOrCreate()
+    val sc = SparkContext.getOrCreate(conf)
     val session = SparkSession.builder().getOrCreate();
 
     val rdd = RandomRDDs.uniformRDD(sc, 100000)
@@ -33,6 +33,6 @@ object Main {
     // check storage usage for samples
 
     // Execute first query
-    Executor.execute_Q1(desc, session, List("3 months"))
+    Executor.execute_Q1(desc, session, List("3"))
   }     
 }

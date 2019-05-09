@@ -25,29 +25,30 @@ class CubeOperator(reducers: Int) {
 
     // Task 1
     // First Step
-    var mrsSpreadSingle: RDD[(List[Any], Double)] = null
-    var mrsSpreadDouble: RDD[(List[Any], (Double, Double))] = null
+    var partialCellsSingle: RDD[(List[Any], Double)] = null
+    var partialCellsDouble: RDD[(List[Any], (Double, Double))] = null
+
+    // Group by - bottom cell
     agg match {
-      case "COUNT" => mrsSpreadSingle = rdd.map(row => (index.map(colIndex => row.get(colIndex)), 1.0)).reduceByKey((accum, current) => accum + current)
-      case "SUM" => mrsSpreadSingle = rdd.map(row => (index.map(colIndex => row.get(colIndex)), row.get(aggIndex).asInstanceOf[Int].toDouble)).reduceByKey((accum, current) => accum + current)
-      case "MIN" => mrsSpreadSingle = rdd.map(row => (index.map(colIndex => row.get(colIndex)), row.get(aggIndex).asInstanceOf[Int].toDouble)).reduceByKey((accum, current) => Math.min(accum, current))
-      case "MAX" => mrsSpreadSingle = rdd.map(row => (index.map(colIndex => row.get(colIndex)), row.get(aggIndex).asInstanceOf[Int].toDouble)).reduceByKey((accum, current) => Math.max(accum, current))
-      case "AVG" => mrsSpreadDouble = rdd.map(row => (index.map(colIndex => row.get(colIndex)), (row.get(aggIndex).asInstanceOf[Int].toDouble, 1.0))).reduceByKey((accum, current) => (accum._1 + current._1, accum._2 + current._2))
+      case "COUNT" => partialCellsSingle = rdd.map(row => (index.map(colIndex => row.get(colIndex)), 1.0)).reduceByKey((accum, current) => accum + current)
+      case "SUM" => partialCellsSingle = rdd.map(row => (index.map(colIndex => row.get(colIndex)), row.get(aggIndex).asInstanceOf[Int].toDouble)).reduceByKey((accum, current) => accum + current)
+      case "MIN" => partialCellsSingle = rdd.map(row => (index.map(colIndex => row.get(colIndex)), row.get(aggIndex).asInstanceOf[Int].toDouble)).reduceByKey((accum, current) => Math.min(accum, current))
+      case "MAX" => partialCellsSingle = rdd.map(row => (index.map(colIndex => row.get(colIndex)), row.get(aggIndex).asInstanceOf[Int].toDouble)).reduceByKey((accum, current) => Math.max(accum, current))
+      case "AVG" => partialCellsDouble = rdd.map(row => (index.map(colIndex => row.get(colIndex)), (row.get(aggIndex).asInstanceOf[Int].toDouble, 1.0))).reduceByKey((accum, current) => (accum._1 + current._1, accum._2 + current._2))
     }
 
+    // Calculate permutations
     var permutations = index.indices.flatMap(i => index.indices.combinations(i).toSet)
     permutations = permutations :+ index.indices.toVector
 
-    var partialCellsSingle: RDD[(List[Any], Double)] = null
-    var partialCellsDouble: RDD[(List[Any], (Double, Double))] = null
     if (agg == "AVG") {
-      partialCellsDouble = mrsSpreadDouble.map(groupedRow => permutations.map(perm => (groupedRow._1.zipWithIndex.map { case (cols, i) => if (perm contains i) Some(cols) else None }, groupedRow._2))).flatMap(x => x)
+      partialCellsDouble = partialCellsDouble.map(groupedRow => permutations.map(perm => (groupedRow._1.zipWithIndex.map { case (cols, i) => if (perm contains i) Some(cols) else None }, groupedRow._2))).flatMap(x => x)
     }
     else {
-      partialCellsSingle = mrsSpreadSingle.map(groupedRow => permutations.map(perm => (groupedRow._1.zipWithIndex.map { case (cols, i) => if (perm contains i) Some(cols) else None }, groupedRow._2))).flatMap(x => x)
+      partialCellsSingle = partialCellsSingle.map(groupedRow => permutations.map(perm => (groupedRow._1.zipWithIndex.map { case (cols, i) => if (perm contains i) Some(cols) else None }, groupedRow._2))).flatMap(x => x)
     }
 
-    // Second Step
+    // Second Step - shuffle and reduce partial results
     var cuboids: RDD[(List[Any], Double)] = null
     agg match {
       case "COUNT" => cuboids = partialCellsSingle.reduceByKey((accum, current) => accum + current)
@@ -57,15 +58,54 @@ class CubeOperator(reducers: Int) {
       case "AVG" => cuboids = partialCellsDouble.reduceByKey((accum, current) => (accum._1 + current._1, accum._2 + current._2)).map { case (cols, values) => (cols, values._1 / values._2) }
     }
 
-    val formatted = cuboids.map(x => (x._1.mkString(", ").replace("Some(", "").replace(")", ""), x._2))
+    val finalCube = cuboids.map(x => (x._1.mkString(", ").replace("Some(", "").replace(")", ""), x._2))
 
-    formatted
+    finalCube
   }
 
   def cube_naive(dataset: Dataset, groupingAttributes: List[String], aggAttribute: String, agg: String): RDD[(String, Double)] = {
 
-    //TODO naive algorithm for cube computation
-    null
+    val rdd = dataset.getRDD()
+    val schema = dataset.getSchema()
+
+    val index = groupingAttributes.map(x => schema.indexOf(x))
+    println(index)
+    val aggIndex = schema.indexOf(aggAttribute)
+
+    // Task 1
+    // First Step
+    var partialCellsSingle: RDD[(List[Any], Double)] = null
+    var partialCellsDouble: RDD[(List[Any], (Double, Double))] = null
+    var permutations = index.indices.flatMap(i => index.indices.combinations(i).toSet)
+    permutations = permutations :+ index.indices.toVector
+
+    // Naive - create all permutations without grouping first
+    if (agg == "AVG") {
+      partialCellsDouble = rdd.map(row => (index.map(colIndex => row.get(colIndex)), (row.get(aggIndex).asInstanceOf[Int].toDouble, 1.0)))
+      partialCellsDouble = partialCellsDouble.map(groupedRow => permutations.map(perm => (groupedRow._1.zipWithIndex.map { case (cols, i) => if (perm contains i) Some(cols) else None }, groupedRow._2))).flatMap(x => x)
+    }
+    else {
+      if (agg == "COUNT") {
+        partialCellsSingle = rdd.map(row => (index.map(colIndex => row.get(colIndex)), 1.0))
+      } else {
+        partialCellsSingle = rdd.map(row => (index.map(colIndex => row.get(colIndex)), row.get(aggIndex).asInstanceOf[Int].toDouble))
+      }
+      partialCellsSingle = partialCellsSingle.map(groupedRow => permutations.map(perm => (groupedRow._1.zipWithIndex.map { case (cols, i) => if (perm contains i) Some(cols) else None }, groupedRow._2))).flatMap(x => x)
+    }
+
+    // Shuffle and reduce all
+    var cuboids: RDD[(List[Any], Double)] = null
+    agg match {
+      case "COUNT" => cuboids = partialCellsSingle.reduceByKey((accum, current) => accum + current)
+      case "SUM" => cuboids = partialCellsSingle.reduceByKey((accum, current) => accum + current)
+      case "MIN" => cuboids = partialCellsSingle.reduceByKey((accum, current) => Math.min(accum, current))
+      case "MAX" => cuboids = partialCellsSingle.reduceByKey((accum, current) => Math.max(accum, current))
+      case "AVG" => cuboids = partialCellsDouble.reduceByKey((accum, current) => (accum._1 + current._1, accum._2 + current._2)).map { case (cols, values) => (cols, values._1 / values._2) }
+    }
+
+    val finalCube = cuboids.map(x => (x._1.mkString(", ").replace("Some(", "").replace(")", ""), x._2))
+
+    finalCube
   }
 
 }

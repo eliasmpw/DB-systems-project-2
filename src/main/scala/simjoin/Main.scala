@@ -34,7 +34,6 @@ object Main {
     val schema = df.schema.toList.map(x => x.name)
     val dataset = new Dataset(rdd, schema)
 
-
     val t1 = System.nanoTime
     val sj = new SimilarityJoin(numAnchors, distanceThreshold)
     val res = sj.similarity_join(dataset, attrIndex)
@@ -46,35 +45,6 @@ object Main {
     println((t2-t1)/(Math.pow(10,9)))
 
     /*
-    // Compute the Levenshtein distance between two strings.
-    def edit_distance(k: String, v: String): Int = {
-      val m = k.size
-      val n = v.size
-      var distanceMatrix: Array[Array[Int]] = Array.ofDim(m + 1, n + 1)
-
-      def min3(a: Int, b: Int, c: Int): Int = { if (a < b) { if (a < c) (a) else c } else { if (b < c) b else c } }
-
-      for(i <- 0 to m) {
-        distanceMatrix(i)(0) = i
-      }
-      for(j <- 0 to n) {
-        distanceMatrix(0)(j) = j
-      }
-
-      for(j <- 1 to n) {
-        for (i <- 1 to m) {
-          if (k(i-1) == v(j-1)) {
-            distanceMatrix(i)(j) = distanceMatrix(i-1)(j-1)
-          } else {
-            distanceMatrix(i)(j) = min3(distanceMatrix(i-1)(j) + 1,   // deletion
-                                        distanceMatrix(i)(j-1) + 1,   // insertion
-                                        distanceMatrix(i-1)(j-1) + 1) // substitution
-          }
-        }
-      }
-      distanceMatrix(m)(n)
-    }
-
     // cartesian
     val t1Cartesian = System.nanoTime
     val cartesian = rdd.map(x => (x(attrIndex), x)).cartesian(rdd.map(x => (x(attrIndex), x)))
@@ -84,8 +54,6 @@ object Main {
     println(cartesian.count)
     val t2Cartesian = System.nanoTime
     println((t2Cartesian-t1Cartesian)/(Math.pow(10,9)))
-
     */
-
   }
 }

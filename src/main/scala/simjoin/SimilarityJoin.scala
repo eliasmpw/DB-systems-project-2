@@ -17,21 +17,32 @@ class SimilarityJoin(numAnchors: Int, distThreshold:Int) extends java.io.Seriali
    * */
   def similarity_join(dataset: Dataset, attrIndex: Int) : RDD[(String, String)] = {
 
+    def compareAll(part: Iterator[(String, (String, Boolean))]): Iterator[(String, String)] = {
+      val strings = part.map(_._2).toSeq
+      val nativeStrings = strings.filter(_._2).map(_._1).toIndexedSeq
+      val otherStrings = strings.filterNot(_._2).map(_._1).toIndexedSeq
+
+      val homePairs = for {
+        i <- 0 to (nativeStrings.size - 1)
+        j <- i + 1 to (nativeStrings.size - 1)
+        if levenshtein(nativeStrings(i), nativeStrings(j)) <= distThreshold
+      } yield (nativeStrings(i), nativeStrings(j))
+
+      val outsiderPairs = for {
+        i <- 0 to (otherStrings.size - 1)
+        j <- 0 to (nativeStrings.size - 1)
+        if levenshtein(otherStrings(i), nativeStrings(j)) <= distThreshold
+      } yield (otherStrings(i), nativeStrings(j))
+
+      (homePairs ++ outsiderPairs).toIterator
+
+    }
+
+    // Extract values.
     val rdd: RDD[String] = dataset.getRDD().map(_.getString(attrIndex))
 
-    // Should we use `sample` wich returns an RDD ?
+    // Take a sample of correct size
     val anchors: Array[String] = rdd.takeSample(false, numAnchors)
-
-    def compareAll(part: Iterator[(String, String)]): Iterator[(String, String)] = {
-      // FIXME: Ensure that comparisons are done only once.
-      val strings = part.map(_._2).toIndexedSeq
-      val ret = for {
-        i <- 0 to (strings.size - 1)
-        j <- i + 1 to (strings.size - 1)
-        if levenshtein(strings(i), strings(j)) <= distThreshold
-      } yield (strings(i), strings(j))
-      ret.toIterator
-    }
 
     rdd.flatMap(assign(anchors))
       .partitionBy(new SimilarityJoinPartitioner(anchors))
@@ -39,19 +50,33 @@ class SimilarityJoin(numAnchors: Int, distThreshold:Int) extends java.io.Seriali
 
   }
 
-  // Assign each element of the RDD to it's anchor point
-  def assign(anchors: Array[String])(v: String): List[(String, String)] = {
+  // Assign each element of the RDD to it's anchor point, and to the anchor
+  // point's of which it is in the outer region, but marking it as not
+  // originating from that region.
+  def assign(anchors: Array[String])(v: String): Array[(String, (String, Boolean))] = {
+
     val dists = anchors.map(k => levenshtein(k, v))
-    List((anchors(dists.indices.minBy(dists)), v))
+    val anchorDist = dists.min
+    val outers = dists.zipWithIndex.filter{ case (d, i) => d != anchorDist && d <= anchorDist + 2 * distThreshold }
+
+    outers.map{ case (d, i) => (anchors(i), (v, false))} :+ (anchors(dists.indices.minBy(dists)), (v, true))
+
   }
 
   // Compute the Levenshtein distance between two strings.
   def levenshtein(k: String, v: String): Int = {
     val m = k.size
     val n = v.size
+
     var distanceMatrix: Array[Array[Int]] = Array.ofDim(m + 1, n + 1)
 
-    def min3(a: Int, b: Int, c: Int): Int = { if (a < b) { if (a < c) (a) else c } else { if (b < c) b else c } }
+    def min3(a: Int, b: Int, c: Int): Int = {
+      if (a < b) {
+        if (a < c) a else c
+      } else {
+        if (b < c) b else c
+      }
+    }
 
     for(i <- 0 to m) {
       distanceMatrix(i)(0) = i
@@ -73,7 +98,6 @@ class SimilarityJoin(numAnchors: Int, distThreshold:Int) extends java.io.Seriali
     }
     distanceMatrix(m)(n)
   }
-
 }
 
 class SimilarityJoinPartitioner(anchors: Array[String]) extends org.apache.spark.Partitioner {

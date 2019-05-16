@@ -41,10 +41,10 @@ class CubeOperator(reducers: Int) {
     permutations = permutations :+ index.indices.toVector
 
     if (agg == "AVG") {
-      partialCellsDouble = partialCellsDouble.map(groupedRow => permutations.map(perm => (groupedRow._1.zipWithIndex.map { case (cols, i) => if (perm contains i) Some(cols) else None }, groupedRow._2))).flatMap(x => x)
+      partialCellsDouble = partialCellsDouble.map(groupedRow => permutations.map(perm => (groupedRow._1.zipWithIndex.map { case (cols, i) => if (perm contains i) Some(cols) else '*' }, groupedRow._2))).flatMap(x => x)
     }
     else {
-      partialCellsSingle = partialCellsSingle.map(groupedRow => permutations.map(perm => (groupedRow._1.zipWithIndex.map { case (cols, i) => if (perm contains i) Some(cols) else None }, groupedRow._2))).flatMap(x => x)
+      partialCellsSingle = partialCellsSingle.map(groupedRow => permutations.map(perm => (groupedRow._1.zipWithIndex.map { case (cols, i) => if (perm contains i) Some(cols) else '*' }, groupedRow._2))).flatMap(x => x)
     }
 
     // Second Step - shuffle and reduce partial results
@@ -80,7 +80,7 @@ class CubeOperator(reducers: Int) {
     // Naive - create all permutations without grouping first
     if (agg == "AVG") {
       partialCellsDouble = rdd.map(row => (index.map(colIndex => row.get(colIndex)), (row.get(aggIndex).asInstanceOf[Int].toDouble, 1.0)))
-      partialCellsDouble = partialCellsDouble.map(groupedRow => permutations.map(perm => (groupedRow._1.zipWithIndex.map { case (cols, i) => if (perm contains i) Some(cols) else None }, groupedRow._2))).flatMap(x => x)
+      partialCellsDouble = partialCellsDouble.map(groupedRow => permutations.map(perm => (groupedRow._1.zipWithIndex.map { case (cols, i) => if (perm contains i) Some(cols) else '*' }, groupedRow._2))).flatMap(x => x)
     }
     else {
       if (agg == "COUNT") {
@@ -88,7 +88,7 @@ class CubeOperator(reducers: Int) {
       } else {
         partialCellsSingle = rdd.map(row => (index.map(colIndex => row.get(colIndex)), row.get(aggIndex).asInstanceOf[Int].toDouble))
       }
-      partialCellsSingle = partialCellsSingle.map(groupedRow => permutations.map(perm => (groupedRow._1.zipWithIndex.map { case (cols, i) => if (perm contains i) Some(cols) else None }, groupedRow._2))).flatMap(x => x)
+      partialCellsSingle = partialCellsSingle.map(groupedRow => permutations.map(perm => (groupedRow._1.zipWithIndex.map { case (cols, i) => if (perm contains i) Some(cols) else '*' }, groupedRow._2))).flatMap(x => x)
     }
 
     // Shuffle and reduce all

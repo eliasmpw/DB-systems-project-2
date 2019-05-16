@@ -8,21 +8,28 @@ import java.io._
 
 object Main {
   def main(args: Array[String]) {
-    val reducers = 10
+    val reducers = 2
 
-    val inputFile = "../lineorder_xs.tbl"
-    val input = new File(getClass.getResource(inputFile).getFile).getPath
+    val inputFile = "../lineorder_small.tbl"
+//    val input = new File(getClass.getResource(inputFile).getFile).getPath
 
-    val sparkConf = new SparkConf().setAppName("CS422-Project2").setMaster("local[16]")
+    val sparkConf = new SparkConf().setAppName("CS422-Project2")//.setMaster("local[16]")
     val ctx = new SparkContext(sparkConf)
     val sqlContext = new org.apache.spark.sql.SQLContext(ctx)
 
-    val df = sqlContext.read
+//    val df = sqlContext.read
+//      .format("com.databricks.spark.csv")
+//      .option("header", "true")
+//      .option("inferSchema", "true")
+//      .option("delimiter", "|")
+//      .load(input)
+
+    -val df = sqlContext.read
       .format("com.databricks.spark.csv")
       .option("header", "true")
       .option("inferSchema", "true")
-      .option("delimiter", "|")
-      .load(input)
+      .option("delimiter", ",")
+      .load(inputFile)
 
     val rdd = df.rdd
 
@@ -34,9 +41,14 @@ object Main {
 
     var groupingList = List("lo_suppkey", "lo_shipmode", "lo_orderdate")
 
+    val startTime = System.nanoTime()
+
     val res = cb.cube_naive(dataset, groupingList, "lo_supplycost", "SUM")
 
+    val estimatedTime = System.nanoTime() - startTime
+
     res.collect().foreach(println) //Print our cube
+    println(estimatedTime)
 
     /*
        The above call corresponds to the query:

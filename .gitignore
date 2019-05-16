@@ -8,3 +8,5 @@ project/target
 /bin/
 project/project
 .cache-tests
+queries
+tpch_parquet_sf1

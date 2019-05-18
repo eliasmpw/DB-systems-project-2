@@ -8,27 +8,20 @@ import java.io._
 
 object Main {
   def main(args: Array[String]) {
-    val reducers = 2
+    val reducers = 10
 
-    val inputFile = "../lineorder_small.tbl"
+    val inputFile = "hdfs:/user/cs422-group3/test/lineorder_big.tbl"
 //    val input = new File(getClass.getResource(inputFile).getFile).getPath
 
     val sparkConf = new SparkConf().setAppName("CS422-Project2")//.setMaster("local[16]")
     val ctx = new SparkContext(sparkConf)
     val sqlContext = new org.apache.spark.sql.SQLContext(ctx)
 
-//    val df = sqlContext.read
-//      .format("com.databricks.spark.csv")
-//      .option("header", "true")
-//      .option("inferSchema", "true")
-//      .option("delimiter", "|")
-//      .load(input)
-
-    -val df = sqlContext.read
+    val df = sqlContext.read
       .format("com.databricks.spark.csv")
       .option("header", "true")
       .option("inferSchema", "true")
-      .option("delimiter", ",")
+      .option("delimiter", "|")
       .load(inputFile)
 
     val rdd = df.rdd
@@ -41,14 +34,29 @@ object Main {
 
     var groupingList = List("lo_suppkey", "lo_shipmode", "lo_orderdate")
 
-    val startTime = System.nanoTime()
-
-    val res = cb.cube_naive(dataset, groupingList, "lo_supplycost", "SUM")
-
-    val estimatedTime = System.nanoTime() - startTime
-
-    res.collect().foreach(println) //Print our cube
+    var startTime = System.nanoTime()
+    var res = cb.cube(dataset, List("lo_orderkey"), "lo_revenue", "AVG")
+    var estimatedTime = System.nanoTime() - startTime
+    println("Test if it is working with 1 dimension")
     println(estimatedTime)
+    println("---------- REAL RUN BELOW -----------")
+
+
+    startTime = System.nanoTime()
+    res = cb.cube(dataset, groupingList, "lo_supplycost", "AVG")
+    estimatedTime = System.nanoTime() - startTime
+    res.collect().foreach(println) //Print our cube
+    println("AVG")
+    println(estimatedTime)
+//    res.saveAsTextFile("./cube")
+
+    startTime = System.nanoTime()
+    res = cb.cube_naive(dataset, groupingList, "lo_supplycost", "AVG")
+    estimatedTime = System.nanoTime() - startTime
+    println("AVG naive")
+    println(estimatedTime)
+//    res.saveAsTextFile("./cubeNaive")
+
 
     /*
        The above call corresponds to the query:

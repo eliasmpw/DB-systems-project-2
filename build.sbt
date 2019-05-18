@@ -6,8 +6,8 @@ name := "CS422-Project2"
 
 version := "0.1.0"
 
-scalaVersion := "2.11.7"
-val sparkVersion = "2.2.0"
+scalaVersion := "2.11.8"
+val sparkVersion = "2.3.2"
 
 jarName in assembly := "project2.jar"
 
@@ -18,9 +18,9 @@ libraryDependencies += "org.apache.spark" %% "spark-sql" % sparkVersion
 libraryDependencies +=  "org.scalaj" %% "scalaj-http" % "2.3.0"
 
 libraryDependencies ++= Seq("org.slf4j" % "slf4j-api" % "1.7.5",
-                            "org.slf4j" % "slf4j-simple" % "1.7.5")
+  "org.slf4j" % "slf4j-simple" % "1.7.5")
 
-libraryDependencies += "org.apache.spark" %% "spark-mllib" % sparkVersion % "compile"
+libraryDependencies += "org.apache.spark" %% "spark-mllib" % sparkVersion % "provided"
 
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-streaming" % "1.3.1"

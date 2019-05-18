@@ -94,11 +94,11 @@ class CubeOperator(reducers: Int) {
     // Shuffle and reduce all
     var cuboids: RDD[(List[Any], Double)] = null
     agg match {
-      case "COUNT" => cuboids = partialCellsSingle.reduceByKey((accum, current) => accum + current, reducers)
-      case "SUM" => cuboids = partialCellsSingle.reduceByKey((accum, current) => accum + current, reducers)
-      case "MIN" => cuboids = partialCellsSingle.reduceByKey((accum, current) => Math.min(accum, current), reducers)
-      case "MAX" => cuboids = partialCellsSingle.reduceByKey((accum, current) => Math.max(accum, current), reducers)
-      case "AVG" => cuboids = partialCellsDouble.reduceByKey((accum, current) => (accum._1 + current._1, accum._2 + current._2), reducers).map { case (cols, values) => (cols, values._1 / values._2) }
+      case "COUNT" => cuboids = partialCellsSingle.reduceByKey((accum, current) => accum + current)
+      case "SUM" => cuboids = partialCellsSingle.reduceByKey((accum, current) => accum + current)
+      case "MIN" => cuboids = partialCellsSingle.reduceByKey((accum, current) => Math.min(accum, current))
+      case "MAX" => cuboids = partialCellsSingle.reduceByKey((accum, current) => Math.max(accum, current))
+      case "AVG" => cuboids = partialCellsDouble.reduceByKey((accum, current) => (accum._1 + current._1, accum._2 + current._2)).map { case (cols, values) => (cols, values._1 / values._2) }
     }
 
     val finalCube = cuboids.map(x => (x._1.mkString(", ").replace("Some(", "").replace(")", ""), x._2))

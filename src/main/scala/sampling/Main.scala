@@ -11,8 +11,9 @@ object Main {
 
     val conf = new SparkConf().setAppName("app").setMaster("local[*]")
     val sc = SparkContext.getOrCreate(conf)
-    val session = SparkSession.builder().getOrCreate();
+    val session = SparkSession.builder().getOrCreate()
 
+//    val lineorderFile= "hdfs:/user/cs422-group3/test/lineorder_small.tbl"
 //    val lineorderFile= "../lineorder_small.tbl"
 //    val lineorder = new File(getClass.getResource(lineorderFile).getFile).getPath
 //    val lineorderDf = session.read
@@ -37,6 +38,7 @@ object Main {
     desc.e = 0.1
     desc.ci = 0.95
 
+//    val pathPrefix = "/cs422-data/tpch/sf100/parquet/"
     val pathPrefix = "./tpch_parquet_sf1/"
     desc.customer = session.read.parquet(pathPrefix + "customer.parquet")
     desc.lineitem = session.read.parquet(pathPrefix + "lineitem.parquet")
@@ -55,5 +57,7 @@ object Main {
 
     // Execute first query
     Executor.execute_Q1(desc, session, List("3"))
+    //Executor.execute_Q3(desc, session, List("AUTOMOBILE","1996-03-13"))
+    //Executor.execute_Q5(desc, session, List("ASIA", "1996-03-13"))
   }     
 }

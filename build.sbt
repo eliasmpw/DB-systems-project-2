@@ -20,7 +20,7 @@ libraryDependencies +=  "org.scalaj" %% "scalaj-http" % "2.3.0"
 libraryDependencies ++= Seq("org.slf4j" % "slf4j-api" % "1.7.5",
   "org.slf4j" % "slf4j-simple" % "1.7.5")
 
-libraryDependencies += "org.apache.spark" %% "spark-mllib" % sparkVersion % "provided"
+libraryDependencies += "org.apache.spark" %% "spark-mllib" % sparkVersion % "compile"
 
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-streaming" % "1.3.1"

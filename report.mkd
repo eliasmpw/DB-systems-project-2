@@ -1,0 +1,13 @@
+---
+title: "CS-422 - Project 2"
+date: 2019-05-19
+author:
+    - Joachim Desroches (257178)
+    - Elias Poromawiri (FIXME)
+...
+
+## Task 1
+
+## Task 2
+
+## Task 3

@@ -14,7 +14,7 @@ Then we tested them on small, medium and big datasets. Another parameter that we
 The conclusion we came to is that the naive algorithm performs better when we have a small number of cube dimensions and reducers, whereas the MRDataCube algorithm has better performance almost on every other scenario.
 
 Algorithm: **MRDataCube**\
-Number of tuples: **6K** (6008)
+Number of tuples: **6K** (6008)\
 |   *Time measured in [ms]* |   |          | Number of Reducers |          |
 |:-------------------------:|:-:|:--------:|:------------------:|:--------:|
 |                           |   |    **10**    |         **20**         |    **30**    |
@@ -25,7 +25,7 @@ Number of tuples: **6K** (6008)
 
 
 Algorithm: **Naive Algorithm**\
-Number of tuples: **6K** (6008)
+Number of tuples: **6K** (6008)\
 |   *Time measured in [ms]* |   |          | Number of Reducers |          |
 |:-------------------------:|:-:|:--------:|:------------------:|:--------:|
 |                           |   |    **10**    |         **20**         |    **30**    |
@@ -36,7 +36,7 @@ Number of tuples: **6K** (6008)
 
 
 Algorithm: **MRDataCube**\
-Number of tuples: **600K** (600572)
+Number of tuples: **600K** (600572)\
 |   *Time measured in [ms]* |   |          | Number of Reducers |          |
 |:-------------------------:|:-:|:--------:|:------------------:|:--------:|
 |                           |   |    **10**    |         **20**         |    **30**    |
@@ -47,7 +47,7 @@ Number of tuples: **600K** (600572)
 
 
 Algorithm: **Naive Algorithm**\
-Number of tuples: **600K** (600572)
+Number of tuples: **600K** (600572)\
 |   *Time measured in [ms]* |   |          | Number of Reducers |          |
 |:-------------------------:|:-:|:--------:|:------------------:|:--------:|
 |                           |   |    **10**    |         **20**         |    **30**    |
@@ -58,7 +58,7 @@ Number of tuples: **600K** (600572)
 
 
 Algorithm: **MRDataCube**\
-Number of tuples: **6M** (6001171)
+Number of tuples: **6M** (6001171)\
 |   *Time measured in [ms]* |   |          | Number of Reducers |          |
 |:-------------------------:|:-:|:--------:|:------------------:|:--------:|
 |                           |   |    **10**    |         **20**         |    **30**    |
@@ -69,7 +69,7 @@ Number of tuples: **6M** (6001171)
 
 
 Algorithm: **Naive Algorithm**\
-Number of tuples: **6M** (6001171)
+Number of tuples: **6M** (6001171)\
 |   *Time measured in [ms]* |   |          | Number of Reducers |          |
 |:-------------------------:|:-:|:--------:|:------------------:|:--------:|
 |                           |   |    **10**    |         **20**         |    **30**    |
